@@ -6,7 +6,7 @@ Do not **eat** error. Example
 
 ![image-20211021100728136](image-20211021100728136.png)
 
-# Database
+## Database
 
 Do not use foreign key reference
 
@@ -43,4 +43,8 @@ If variable or function return a list, slice, it will end with `List` or `s` or 
 Example:
 
 ![image-20211026092918067](image-20211026092918067.png)
+
+## Pointer
+
+Will use pointer, always, will not pass by value for struct type object
 
