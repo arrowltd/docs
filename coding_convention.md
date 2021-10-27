@@ -48,3 +48,12 @@ Example:
 
 Will use pointer, always, will not pass by value for struct type object
 
+## Do not reuse struct that are not related just because need a field in it
+
+Example this struct here is for create
+
+![image-20211027142715059](image-20211027142715059.png)
+
+Should not do this (reuse the struct for params in list api, because need `PoolId` field)
+
+![image-20211027142741061](image-20211027142741061.png)
