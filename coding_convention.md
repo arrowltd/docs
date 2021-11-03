@@ -22,6 +22,10 @@ Remember to add index
 
 Every changes made to the structure of the database will need migration
 
+When creating new database, have to have `primary key`
+* Normally it will be `id BIGSERIAL PRIMARY KEY`
+* Please dont use `SERIAL`, or forget to add `PRIMARY KEY`
+
 ## Query in code
 
 ![image-20211021094448239](image-20211021094448239.png)
