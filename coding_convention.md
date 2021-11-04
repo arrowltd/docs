@@ -66,3 +66,15 @@ Should not do this (reuse the struct for params in list api, because need `PoolI
 
 For API that need validation (username cannot be blank, no special character, or logic validation), API will always have to validate, not just FE
 	* Because if only FE validate, anyone can just call the API themself and bypass FE validation
+
+## Duplication check
+
+For field, data that need duplication check, will have to check with a regex to prevent special character also
+
+* Normally this will be `username`, `code` bla bla, these always have `a-z0-9` or the like, this will prevent special character
+
+* without special character prevention, data can have extra invisible character that cause 2 same strings to be not equal but display the same
+
+* in this example "douglas" and "douglas" are not equal
+
+  ![image-20211104155140854](image-20211104155140854.png)
