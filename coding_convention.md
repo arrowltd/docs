@@ -75,6 +75,6 @@ For field, data that need duplication check, will have to check with a regex to 
 
 * without special character prevention, data can have extra invisible character that cause 2 same strings to be not equal but display the same
 
-* in this example "douglas" and "douglas" are not equal
+* in this example "douglas" and "douglas" are not equal (https://play.golang.org/p/djhmTffdvvr)
 
   ![image-20211104155140854](image-20211104155140854.png)
