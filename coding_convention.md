@@ -99,3 +99,11 @@ In Code, should always use `date` package
 * will use `date.Now()` instead of `time.Now()` always
 * any code about format datetime to string, string to datetime object should use funcs inside `date` package
 * if need more func then add new func to `date` package
+
+
+
+## HTTP Request
+
+Remember to add `defer resp.Body.Close()` after send request
+
+![image-20211109104207041](image-20211109104207041.png)
