@@ -107,3 +107,15 @@ In Code, should always use `date` package
 Remember to add `defer resp.Body.Close()` after send request
 
 ![image-20211109104207041](image-20211109104207041.png)
+
+## Git
+
+Commit message will have to be meaningful
+
+Please dont:
+
+![telegram-cloud-photo-size-5-6075848371614101317-y](telegram-cloud-photo-size-5-6075848371614101317-y.png)
+
+another to do this is squash all commit into 1, then amend the commit message to be meaningful
+
+https://www.internalpointers.com/post/squash-commits-into-one-git
