@@ -20,7 +20,19 @@ Timestamp will always have timezone (using `timestamptz`)
 
 Remember to add index
 
+Always `defer rows.Close()` after using `db.Query`
+* wrap the query code inside `func() {}()` if query code is in a for loop
+
+Think of `db.Query` as a way to get data **only**
+* Should not have logic code, func execute code, another query code inside the `for rows.Next()` loop
+* Should only have code to get data out of `rows` (`rows.Scan` code) inside `for rows.Next()` loop
+* Any logic, func execute code, will stay outside of `for rows.Next()` loop (it should stay in another for loop after `for rows.Next()` loop)
+
 Every changes made to the structure of the database will need migration
+
+When query a big table, limit the query to 1000-3000 rows
+
+If an API request calls more than 50 database queries, rethink the logic flow/talk to manager about performance impact
 
 When creating new database, have to have `primary key`
 * Normally it will be `id BIGSERIAL PRIMARY KEY`
@@ -78,3 +90,12 @@ For field, data that need duplication check, will have to check with a regex to 
 * in this example "douglas" and "douglas" are not equal (https://play.golang.org/p/djhmTffdvvr)
 
   ![image-20211104155140854](image-20211104155140854.png)
+
+# Timezone
+
+For database, use `timestamptz` data type
+
+In Code, should always use `date` package
+* will use `date.Now()` instead of `time.Now()` always
+* any code about format datetime to string, string to datetime object should use funcs inside `date` package
+* if need more func then add new func to `date` package
