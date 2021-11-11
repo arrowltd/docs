@@ -119,3 +119,24 @@ Please dont:
 another to do this is squash all commit into 1, then amend the commit message to be meaningful
 
 https://www.internalpointers.com/post/squash-commits-into-one-git
+
+
+
+## Int/Number for type
+
+Type should be `string`, a self explain text for that type, eg:
+
+* `promo_win`
+* `withdraw`
+
+If integrate 3rd party, and they are using integer/number for type, have to create const for those
+
+Example this is very hard to read, no idea what 20 21 or 111 mean
+
+![image-20211111102804707](image-20211111102804707.png)
+
+Updated:
+
+![image-20211111102832004](image-20211111102832004.png)
+
+![image-20211111102933883](image-20211111102933883.png)
