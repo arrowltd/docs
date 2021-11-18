@@ -19,6 +19,7 @@ All numeric data that does need to be calculated should be `BIGINT` for integer 
 Timestamp will always have timezone (using `timestamptz`)
 
 Remember to add index
+* index name format: `<table_name>_<field_name>_index`
 
 Always `defer rows.Close()` after using `db.Query`
 * wrap the query code inside `func() {}()` if query code is in a for loop
@@ -140,3 +141,24 @@ Updated:
 ![image-20211111102832004](image-20211111102832004.png)
 
 ![image-20211111102933883](image-20211111102933883.png)
+
+
+## Error
+
+return when user needs to see the error (input error, validation error)
+
+should not return error when user does not need to see the error (it will be returned to user as `err:internal_server_error`), so most of api call to 3rd party, database query error etc
+
+panic only if need Tech Lead to check (in production, every panic will notify Tech Lead). So another way to think if should panic or not is to ask yourself is this error need check by Tech Lead in production server?
+
+Some panic cases:
+* API call to 3rd party
+* Most errors from db
+
+If user does not need to see, but also no need to ask Tech Lead to check, then log it to file (using LogSerious)
+
+
+## HTTP Response when success
+
+Should not response empty or JSON `{}` when success. Can be `{"success": true}` or the like
+* This is because sometime when server failure or http problem, empty response can also be sent
