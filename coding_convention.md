@@ -6,6 +6,13 @@ Do not **eat** error. Example
 
 ![image-20211021100728136](image-20211021100728136.png)
 
+another example, this will never happen
+![image](https://user-images.githubusercontent.com/814296/228725006-4e473a7a-5e1b-4bbb-b441-a410020e54be.png)
+
+because if all err "panic inside" then func should not return err
+
+as long as a function return err, it has to be checked
+
 ## Database
 
 Do not use foreign key reference
