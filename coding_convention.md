@@ -170,3 +170,13 @@ If user does not need to see, but also no need to ask Tech Lead to check, then l
 
 Should not response empty or JSON `{}` when success. Can be `{"success": true}` or the like
 * This is because sometime when server failure or http problem, empty response can also be sent
+
+# Float64
+
+Should just never use float64. It is not an exact value
+
+The way our golang project structure, some value, field, object will get cached and use a lot, if a field is in float64, the more that field is used to compute, the easier it will get incorrect value (3 = 2.9999999)
+
+Another problem with float64 is when unmarshal json data in golang. If the json field is number json type, should use decimal.Decimal, or a custom wrapper for decimal.Decimal to read/write json. This is because there are case when reading a number json type into float64 cause it to just off by a bit (3 = 2.999999)
+
+TODO: pending example needed
