@@ -179,4 +179,25 @@ The way our golang project structure, some value, field, object will get cached 
 
 Another problem with float64 is when unmarshal json data in golang. If the json field is number json type, should use decimal.Decimal, or a custom wrapper for decimal.Decimal to read/write json. This is because there are case when reading a number json type into float64 cause it to just off by a bit (3 = 2.999999)
 
+If a JSON response required a number field with decimal value (example {"value": 3.14}, instead of normally {"value": "3.14"}). We will use DecimalNumberJSON struct to do it, instead of decimalValue.Float64()
+```
+type DecimalNumberJSON struct {
+	DecimalNumber decimal.Decimal
+}
+
+func (di *DecimalNumberJSON) UnmarshalJSON(input []byte) error {
+	decimalValue, err := decimal.NewFromString(string(input))
+	di.DecimalNumber = decimalValue
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (di DecimalNumberJSON) MarshalJSON() ([]byte, error) {
+	raw := di.DecimalNumber.String()
+	return []byte(raw), nil
+}
+```
+
 TODO: pending example needed
