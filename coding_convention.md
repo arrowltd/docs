@@ -201,3 +201,7 @@ func (di DecimalNumberJSON) MarshalJSON() ([]byte, error) {
 ```
 
 TODO: pending example needed
+
+# JSON marshal/unmarshal
+
+Will always use struct, or try as much as you can to use struct, instead of Dict or map[string]interface{}. This will prevent various problem with strange json format like number become scientific number, cannot read numeric field from map[string]interface{}
