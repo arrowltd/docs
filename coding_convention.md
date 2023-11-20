@@ -75,11 +75,23 @@ Long list of variables will go to new line, group each line base on application 
 
 ## Naming
 
-If variable or function return a list, slice, it will end with `List` or `s` or `es`
+- If variable or function return a list, slice, it will end with `List` or `s` or `es`
 
 Example:
 
 ![image-20211026092918067](image-20211026092918067.png)
+
+
+- Lowercase the function name if the function isn't called from outside the package.
+
+Example:
+
+ package greeting
+ 
+ func Greeting(){
+ }
+
+If no external package calls the **"Greeting"** function from the greeting package, lowercase the function name to **greeting()** instead.
 
 ## Pointer
 
@@ -217,3 +229,44 @@ TODO: pending example needed
 # JSON marshal/unmarshal
 
 Will always use struct, or try as much as you can to use struct, instead of Dict or map[string]interface{}. This will prevent various problem with strange json format like number become scientific number, cannot read numeric field from map[string]interface{}
+
+# Define a function.
+Any functions defined would be better if they are attached to structs, except the functions defined in help packages (shared/utils).
+
+Format for the function:
+
+type struct_name struct { }
+
+func (m *struct_name) function_name() int {
+
+ //code
+    
+}
+
+Example:
+
+We have a ticket to identify the payment gateways, they have the same features and only the **payment code** is different.
+
+To do this:
+
+- We define an Utilities struct
+
+![Screen Shot 2023-11-20 at 17 12 48](https://github.com/arrowltd/docs/assets/17697751/66d68f15-cd81-4300-a0fc-7c03bd429867)
+
+- Init 2 Utilities (2 payment gateways) struct with the payment code is different: 
+ 
+  ![Screen Shot 2023-11-20 at 17 28 50](https://github.com/arrowltd/docs/assets/17697751/cbf5822e-319c-4758-9ca5-0dbeed247e0f)
+
+- After that we define function callAPIWithUserAgent and attached to Utilities struct
+
+![Screen Shot 2023-11-20 at 17 15 13](https://github.com/arrowltd/docs/assets/17697751/8efd318e-d46f-4f20-b4df-2bfe007c2e74)
+
+- For each payment gateway we only need to define a unique payment code and based on that code we can perform the corresponding logic
+
+
+
+
+
+ 
+
+
