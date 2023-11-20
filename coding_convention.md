@@ -57,6 +57,18 @@ Should tab, go new line just like this
 
 Keywords (`SELECT`, `FROM`, `AS` etc) will be uppercased
 
+Using variable params ($1, $2) instead of use "String Format" at picture below.	
+
+Valid Query:
+
+![Screen Shot 2023-11-20 at 15 51 14](https://github.com/arrowltd/docs/assets/17697751/92f0734d-a539-47df-b713-6f7b1739313a)
+
+Invalid Query:
+
+![Screen Shot 2023-11-20 at 15 52 54](https://github.com/arrowltd/docs/assets/17697751/c8676176-6575-4dd3-beea-57ff46441a12)
+
+In some cases if you need to use query "String Format' let discuss with the Teach Lead about that case firstly
+
 Long list of variables will go to new line, group each line base on application logic, and when get the value out also stay in same line. Example for the above query
 
 ![image-20211021094459924](image-20211021094459924.png)
