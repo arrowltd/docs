@@ -57,6 +57,83 @@ Example:
 
 ![Screen Shot 2023-11-20 at 16 30 48](https://github.com/arrowltd/docs/assets/17697751/8c46daa7-0429-4743-89a5-5486b58d00d4)
 
+## Center Format.
+
+If a feature need to create a new package, we must to add a object center at this package and all the functions/features/logics  will be called through this object.
+
+Example: We have a role feature and it needs to be defined in a separate package.
+
+Step 1: we create a new package and define an object center (RoleCenter) in this package 
+
+![image](https://github.com/arrowltd/docs/assets/17697751/8b57ec94-8095-4080-bcdd-9a4f85677117)
+
+Step 2: Define functions/feature/logic in role package and attached to RoleCenter
+
+![image](https://github.com/arrowltd/docs/assets/17697751/47c5a1ef-4479-4dba-ac5f-2fd9dfee09c0)
+
+Step 3: Go back to the models and init Role Center at there
+
+![image](https://github.com/arrowltd/docs/assets/17697751/f1dcc645-08dd-4ef0-83b8-4cbe34b21c05)
+
+Step 4: Call the functions in object center (Role Center) base on the logic if needed.
+
+![image](https://github.com/arrowltd/docs/assets/17697751/5d815cd5-6cc2-41d6-8d15-934b35d1f53a)
+
+### Identify the relationship between multiple centers: 
+For some cases you create object center  and this center maybe need to call features/logics from another centers.
+To do this we need to indentify the relationship between the centers firstly (discuss with TeachLead to make sure this).
+
+#### Center contains the others.
+Example: We have SubAccountCenter And RoleCenter, we can realize SubAccountCenter contains RoleCenter for sure to define that we have to do:
+
+Step1: Define a RoleCenter like the step at example above.
+
+Step 2: Define a SubCenter constains RoleCenters
+
+![image](https://github.com/arrowltd/docs/assets/17697751/135def74-bbd9-4333-aff0-48df6b3a8f12)
+
+Step3: Init the SubCenter at models
+
+![image](https://github.com/arrowltd/docs/assets/17697751/6b45f2af-489f-48ef-afec-aefa236a1b58)
+
+For some reasons/logics roleCenter need to action back to subCenter we shoudn’t define subCenter at roleCenter. If you do that we will get the error “import cycle not allow”
+
+Example:
+
+![image](https://github.com/arrowltd/docs/assets/17697751/397a4e1a-08a5-4fdb-9681-75853587262e)
+
+To do this case: 
+
+Step 1: Add a attributes (roleDelegate) into subCenter
+
+![image](https://github.com/arrowltd/docs/assets/17697751/c84a6541-cd06-484e-9ba9-79e250672416)
+
+Step2: Comeback to models and define a function RoleCallBackHandler
+
+![image](https://github.com/arrowltd/docs/assets/17697751/9def3e8f-7df6-41a9-9e46-376407794fef)
+
+Step3: At the subCenter you just call RoleCallbackHandler if you need some update from role.
+
+![image](https://github.com/arrowltd/docs/assets/17697751/d7b05d66-581d-4229-8181-521d8d8b5011)
+
+#### Centers are same level:
+For the same level center we call define separately at sample above and the communication between these centers will be through by models.
+
+Example:
+
+![image](https://github.com/arrowltd/docs/assets/17697751/cfb59d2e-f149-4d0b-a0ec-85fc8a688aa0)
+
+### Query in center
+
+Each table query must be executed at the relevant center.
+
+Example: table role have to query in role center only.
+
+
+
+
+
+
 
 
 
