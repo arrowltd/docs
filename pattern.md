@@ -129,6 +129,20 @@ Each table query must be executed at the relevant center.
 
 Example: table role have to query in role center only.
 
+## Display for FE
+
+If we have an struct with mulitple attributes inside and we do not need to display all of these attributes at FE, we can create another struct with the related attributes to display at FE.
+
+Example: we have a struct like this, it has multiple attributes inside and we no need to display all of them.
+
+![Screen Shot 2023-11-30 at 15 03 40](https://github.com/arrowltd/docs/assets/17697751/0810d039-f508-4376-921c-6e1de981e664)
+
+Create an another struct (format: {main struct name}DisplayForFE) and define the attributes need to show.
+![Screen Shot 2023-11-30 at 15 07 10](https://github.com/arrowltd/docs/assets/17697751/36cff644-8fd9-431c-9a74-ee55ea1caa3a)
+
+And the displayForFE struct base on the attributes from main struct.
+
+![Screen Shot 2023-11-30 at 15 08 14](https://github.com/arrowltd/docs/assets/17697751/cd9dd151-8a29-447b-9e8a-1df8e3d3ec4e)
 
 
 
