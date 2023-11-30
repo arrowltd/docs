@@ -81,6 +81,10 @@ Example:
 
 ![image-20211026092918067](image-20211026092918067.png)
 
+use the function name getBetsList dont use getListBet..
+![Screen Shot 2023-11-30 at 15 43 29](https://github.com/arrowltd/docs/assets/17697751/4c312f5b-a7c3-472c-a4d9-460e3aff09af)
+
+
 
 - Lowercase the function name if the function isn't called from outside the package.
 
