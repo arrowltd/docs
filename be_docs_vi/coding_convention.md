@@ -301,6 +301,8 @@ memberList := []*Member{}
 func getMemberWithId(id int) *Member {
 	// function content
 }
+```
+
 - Ví dụ sai
 ```go
 member := Member{
@@ -317,6 +319,7 @@ memberList := []Member{}
 func getMemberWithId(id int) Member {
 	// function content
 }
+```
 
 # Xài lại struct
 
