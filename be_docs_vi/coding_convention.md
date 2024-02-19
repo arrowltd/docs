@@ -1,115 +1,392 @@
+# Giới thiệu
+Những gì viết ở coding convention là bắt buộc phải theo. Mỗi mục sẽ có link tới trang giải thích riêng, có thể đọc nếu muốn, nhưng cái trọng tâm là những gì được ghi lại ở đây. Khi review code, khi chuẩn bị commit, push, sẽ cần đảm bảo phần code đó đã theo đúng chuẩn của coding convention. (chú ý là có 1 cái checklist riêng cho review code, commit push code, ở [đây](review_checklist.md)).
+
+Khi cần làm khác đi coding convention, sẽ luôn cần hỏi người quản lý của bạn.
 # Error
 
-Không được giấu error, ko xử lý error. Ví dụ:
+Không được giấu error. Sẽ luôn phải đọc, xử lý error.
 
-![image-20211021100659720](image-20211021100659720.png)
+#### Ví dụ 1:
 
-![image-20211021100728136](image-20211021100728136.png)
+```go
+err := bsql.Update(trx, "commission", map[string]any{
+    "end_date": date.MaxDate(),
+    "product_id": productId,
+    "brand_id": brandId,
+})
 
-another example, this will never happen
+err = trx.Exec(`
+	DELETE FROM
+		commission
+	WHERE
+		end_date < start_date
+		AND product_id = $1
+		AND brand_id = $2
+`)
+if err != nil {
+	panic(err)
+}
+```
+ở ví dụ trên, chúng ta sẽ thấy được là err trả về của ```bsql.Update``` ko được check hay xử lý, mà code đi tới dòng tiếp theo là ```trx.Exec``` luôn. Nếu ```bsql.Update``` lỗi, chúng ta chỉ thấy được lỗi là `transaction already aborted` ở dòng panic dưới, mà ko biết được nó bị ```aborted``` khi nào
 
-![image](https://user-images.githubusercontent.com/814296/228725006-4e473a7a-5e1b-4bbb-b441-a410020e54be.png)
 
-because if all err "panic inside" then func should not return err
+#### Ví dụ 2:
+```go
+row := company.DB.QueryRow(fmt.Sprintf(`
+	SELECT
+		sum(temp.sum_writer_referral) as sum_all_writer_referral,
+		sum(temp.sum_winloss) as sum_all_winloss
+	FROM
+		(%s) as temp;
+	`, queryString), values...)
 
-as long as a function return err, it has to be checked
+var grandTotalReferral, grandTotalWinloss decimal.NullDecimal
+row.Scan(&grandTotalReferral, &grandTotalWinloss)
+
+results := &pagination.PaginationResp{
+	TotalSize: totalCount,
+	Total: Dict{
+		"grand_total_referral": grandTotalReferral.Decimal,
+		"grand_total_winloss":  grandTotalWinloss.Decimal,
+	},
+	List: list,
+}
+```
+ở dòng ```row.Scan```, function này có trả về error, nhưng ko được xử lý, làm cho query này nếu lỗi, sẽ ko có một thông báo gì mà nó chỉ trả ```grandTotalReferral, grandTotalWinloss``` là 0
+
+
+#### Ví dụ 3:
+```go
+balanceAfter, _ := createTransaction(trx, player.Id, bet.Id, bet.BetAmount, TxTypeSabaBet)
+// err is supposed to panic inside.
+```
+toàn bộ phần code này sai (kể cả comment). Vì nếu ở function này error sẽ luôn panic ở trong func, thì nó ko nên return error. Khi mà function có trả error, nó sẽ cần được kiểm tra.
 
 ## Database
 
-Do not use foreign key reference
+### 1. Tạo table, datatype
+**Không dùng foreign key.**
 
-All string will be `TEXT` type, not `VARCHAR`
+**Luôn phải có `PRIMARY KEY`**
 
-All numeric data that does not need to be calculated should be `TEXT` (does not need to be added, substracted, averaged ect)
+ - đại đa số thời gian nó sẽ là `id BIGSERIAL PRIMARY KEY`
 
-All numeric data that does need to be calculated should be `BIGINT` for integer and `NUMERIC(22, 4)` for double/float
+Tất cả string được lưu vào database sẽ ở cột có `datatype` là `TEXT`, **không bao giờ dùng `VARCHAR`**
 
-Timestamp will always have timezone (using `timestamptz`)
+Tất cả numeric data (data dạng số, ví dụ 543253425), nếu ko cần tính toán (ko cần cộng trừ nhân chia, thao tác trên database ở dạng cộng trừ nhân chia trung bình, etc.) thì cũng sẽ lưu ở dạng `TEXT`
 
-Remember to add index
-* index name format: `<table_name>_<field_name>_index`
+Tất cả timestamp sẽ dùng `TIMESTAMPTZ` (có timezone)
 
-Always `defer rows.Close()` after using `db.Query`
-* wrap the query code inside `func() {}()` if query code is in a for loop
+Tất cả số liệu sẽ dùng `BIGINT` hoặc `NUMERIC(22, 4)`, tuỳ vào việc số này có phải là số nguyên hay ko. **Không bao giờ dùng `INT`**
 
-Think of `db.Query` as a way to get data **only**
-* Should not have logic code, func execute code, another query code inside the `for rows.Next()` loop
-* Should only have code to get data out of `rows` (`rows.Scan` code) inside `for rows.Next()` loop
-* Any logic, func execute code, will stay outside of `for rows.Next()` loop (it should stay in another for loop after `for rows.Next()` loop)
+ - Số điện thoại => `TEXT`
+ - Id chỉ bao gồm chữ số, ko có chữ cái => `TEXT`
+ - Id gồm chữ số và chứ cái => `TEXT`
+ - mã vùng, mã miền, các loại mã pin code được quy định là ko có chữ cái => `TEXT`
+ - số tiền của member => `NUMERIC(22, 4)`
+ - số lượng vé của member => `BIGINT`
+ - số lần member được sai password (chỉ có giá trị từ 0-3) => `BIGINT`
 
-Every changes made to the structure of the database will need migration
+### 2. Query
+Luôn `defer rows.Close()` sau khi dùng `db.Query`
+* Bọc query code ở trong `func() {}()` nếu query code ở trong loop (defer sẽ chạy sau khi function kết thúc chứ ko phải sau 1 lần loop)
 
-When query a big table, limit the query to 1000-3000 rows
+Suy nghĩ về `db.Query` và `for rows.Next()` dưới dạng là cách để lấy data từ database, chứ ko phải để tính toán
+* Sẽ ko được có logic code, gọi function ko liên quan tới việc dịch chuyển sửa đổi data, query thêm một lần nữa, ở trong `for rows.Next()` 
+* Chỉ nên có code để lấy data ra từ `rows` (`rows.Scan` code) ở trong `for rows.Next()` 
+* Tất cả logic, gọi function khác, sẽ nằm ngoài `for rows.Next()` loop (cứ loop qua cái list đã tạo sau khi đọc data từ `for rows.Next()` một lần nữa ở ngoài)
 
-If an API request calls more than 50 database queries, rethink the logic flow/talk to manager about performance impact
+Khi query cần chú ý ko query trên 10000 rows (table, query nào trả nhiều hơn phải có limit). Có thể query nhiều lần khi logic cần phải lấy nhiều hơn 10000 rows, nhưng 1 query chỉ trả về tối đa 10000 rows.
+
+### 3. Thay đổi về database
+Tất cả mọi thay đổi về database (datatype, cột, table, default value etc), đều cần tạo migration
+
+### 4. Số lượng query trong 1 api
+Nếu API request này cần query nhiều hơn 50 database queries, cần suy nghĩ về logic, và nói chuyện với quản lý của bạn.
+
+Nếu phải loop qua một list data, và gọi query cho từng dòng của list data đó, cần suy nghĩ về logic, và nói chuyện với quản lý của bạn.
+
+
 
 When creating new database, have to have `primary key`
 * Normally it will be `id BIGSERIAL PRIMARY KEY`
 * Please dont use `SERIAL`, or forget to add `PRIMARY KEY`
 
-## Query in code
+### 5. Cách viết query trong code
 
-![image-20211021094448239](image-20211021094448239.png)
+```go
+queryString := `
+	SELECT
+		r.id, r.request_type, r.free_bet_event_id,
+		r.date as date,
+		m.account_id, m.username,
+		by_acc.username,
+		m.deposit_count,
+		m.first_deposit_date, m.last_deposit_date, m.last_deposit_bank_account_name, m.last_deposit_amount,
+		m.last_withdraw_date, m.last_withdraw_bank_account_name, m.last_withdraw_amount
+	FROM
+		dw_requests r
+	LEFT JOIN
+		account by_acc ON by_acc.id = r.by_account_id
+	LEFT JOIN
+		member m ON m.account_id = r.member_account_id
+	WHERE
+		r.date >= $1
+		AND r.date <= $2
+	ORDER BY
+		r.date DESC
+	LIMIT
+		3000
+`
+rows, err := db.Query(queryString, startDate, endDate)
+if err != nil {
+	panic(err)
+}
+defer rows.Close()
+for rows.Next() {
+	var id, freeBetEventId, accountId, depositCount int
+	var requestType, username string
+	var byAccountUsername, lastDepositBankAccountName, lastWithdrawBankAccountName sql.NullString
+	var lastDepositAmount, lastWithdrawAmount decimal.NullDecimal
+	var date, firstDepositDate, lastDeposit time.Time
+	var date, firstDepositDate, lastDepositDate time.Time
 
-Should tab, go new line just like this
+	err := rows.Scan(&id, &requestType,&freeBetEventId,
+		&date,
+		&accountId, &username,
+		&byAccountUsername,
+		&depositCount,
+		&firstDepositDate,&lastDepositDate,&lastDepositBankAccountName,&lastDepositAmount,
+		&lastWithdrawDate,&lastWithdrawBankAccountName,&lastWithdrawAmount)
+	if err != nil {
+		panic(err)
+	}
+}
+```
+* SQL Keywords sẽ được viết hoa
+* Xuống hàng ở mỗi SELECT, FROM, WHERE, LEFT JOIN, ORDER BY, LIMIT etc
+* ngắt hàng nếu quá nhiều cột
+* cột ở cùng 1 dòng sẽ thuộc về 1 cụm logic chung (chứ ko phải mỗi cột nằm 1 dòng)
+* vị trí ngắt cột ở mỗi dòng ở SELECT cũng sẽ là vị trí ngắt cột ở mỗi dòng khi Scan()
+* dùng $1 $2 khi thêm params (không được dùng String Format, nếu cần phải dùng, hỏi lead)
 
-`LEFT JOIN` clause can stay in 1 line for easier copy paste, but for readability should go new line
+Một ví dụ về query viết sai:
+```golang
+queryString := fmt.Sprintf(`
+	SELECT
+		r.id, r.request_type, r.free_bet_event_id,
+		r.date as date,
+		m.account_id, m.username,
+		by_acc.username,
+		m.deposit_count,
+		m.first_deposit_date, m.last_deposit_date, m.last_deposit_bank_account_name, m.last_deposit_amount,
+		m.last_withdraw_date, m.last_withdraw_bank_account_name, m.last_withdraw_amount
+	FROM
+		dw_requests r
+	LEFT JOIN
+		account by_acc ON by_acc.id = r.by_account_id
+	LEFT JOIN
+		member m ON m.account_id = r.member_account_id
+	WHERE
+		r.date >= %s
+		AND r.date <= %s
+	ORDER BY
+		r.date DESC
+	LIMIT
+		3000
+`, startDateStr, endDateStr)
+rows, err := db.Query(queryString)
+if err != nil {
+	panic(err)
+}
+defer rows.Close()
+for rows.Next() {
+	var id, freeBetEventId, accountId, depositCount int
+	var requestType, username string
+	var byAccountUsername, lastDepositBankAccountName, lastWithdrawBankAccountName sql.NullString
+	var lastDepositAmount, lastWithdrawAmount decimal.NullDecimal
+	var date, firstDepositDate, lastDeposit time.Time
+	var date, firstDepositDate, lastDepositDate time.Time
 
-Keywords (`SELECT`, `FROM`, `AS` etc) will be uppercased
+	err := rows.Scan(&id, 
+		&requestType,
+		&freeBetEventId,
+		&date,
+		&accountId, 
+		&username,
+		&byAccountUsername,
+		&depositCount,
+		&firstDepositDate,&lastDepositDate,
+		&lastDepositBankAccountName,
+		&lastDepositAmount,
+		&lastWithdrawDate,
+		&lastWithdrawBankAccountName,
+		&lastWithdrawAmount)
+	if err != nil {
+		panic(err)
+	}
+}
+```
+* ngắt cột ở SELECT sai
+* lâu lâu thích thì 2 cột nằm 1 dòng ở Scan sai
+* dùng String Format thay vì $ để truyền params vào query
 
-Using variable params ($1, $2) instead of use "String Format" at picture below.	
+### 6. Cách viết Scan()
+- Không ghi thẳng vào field của object, luôn tạo var rồi dùng nó.
+  * Ví dụ đúng
+```go
+var id, freeBetEventId, accountId, depositCount int
+var requestType, username string
+var byAccountUsername, lastDepositBankAccountName, lastWithdrawBankAccountName sql.NullString
+var lastDepositAmount, lastWithdrawAmount decimal.NullDecimal
+var date, firstDepositDate, lastDeposit time.Time
+var date, firstDepositDate, lastDepositDate time.Time
 
-Valid Query:
+err := rows.Scan(&id, &requestType,&freeBetEventId,
+	&date,
+	&accountId, &username,
+	&byAccountUsername,
+	&depositCount,
+	&firstDepositDate,&lastDepositDate,&lastDepositBankAccountName,&lastDepositAmount,
+	&lastWithdrawDate,&lastWithdrawBankAccountName,&lastWithdrawAmount)
+if err != nil {
+	panic(err)
+}
+```
+  * Ví dụ sai
+```go
+err := row.Scan(&accountObjc.Username, &accountObjc.DisplayName, &accountObjc.WhitelistIPs, &accountObjc.Permission)
+	if err != nil {
+		panic(err)
+	}
+```
 
-![Screen Shot 2023-11-20 at 15 51 14](https://github.com/arrowltd/docs/assets/17697751/92f0734d-a539-47df-b713-6f7b1739313a)
+# Cách đặt tên
 
-Invalid Query:
+- Nếu là list/slice/array thì đuôi phải có `List` hoặc `s` hoặc `es`. Ví dụ
+  * nameList := []string{}
+  * members := []*Member{}
+  * listName => sai
+  * sliceName => sai
+- Nếu là map thì đuôi phải có `Map`, đầu phải có tên key và tên value
+  * companyAccountIdBalanceMap := map[int]decimal.Decimal{}
+  * memberUsernameMemberMap := map[string]*Member{}
+  * mapCompanyCache => sai
+- tên function sẽ bắt đầu bằng động từ
+  * getBetList()
+  * getBets()
+  * queryMemberInfo()
+  * getUsername()
+  * Username() => sai
+- Nếu function không cần public, thì viết chữ cái đầu là viết thường
+  * Nên là lúc mới viết thì cứ viết thường hết, khi nào cần public cái function thì viết hoa lên
 
-![Screen Shot 2023-11-20 at 15 52 54](https://github.com/arrowltd/docs/assets/17697751/c8676176-6575-4dd3-beea-57ff46441a12)
+# Pointer/Value
 
-In some cases if you need to use query "String Format' let discuss with the Teach Lead about that case firstly
+**- Đây là cái Tech Lead kị nhất. Đừng bao giờ sai.**
+- Nếu đang là object (sinh ra từ struct), thì luôn luôn xài pointer, ko bao giờ pass by value 
+- Ví dụ đúng
+```go
+member := &Member{
+	Username : "steve",
+	Age: 2,
+}
+```
 
-Long list of variables will go to new line, group each line base on application logic, and when get the value out also stay in same line. Example for the above query
+```go
+memberList := []*Member{}
+```
 
-![image-20211021094459924](image-20211021094459924.png)
+```go
+func getMemberWithId(id int) *Member {
+	// function content
+}
+- Ví dụ sai
+```go
+member := Member{
+	Username : "steve",
+	Age: 2,
+}
+```
 
-## Naming
+```go
+memberList := []Member{}
+```
 
-- If variable or function return a list, slice, it will end with `List` or `s` or `es`
+```go
+func getMemberWithId(id int) Member {
+	// function content
+}
 
-Example:
+# Xài lại struct
 
-![image-20211026092918067](image-20211026092918067.png)
+Không xài lại struct vì ở đó cần field của struct đó, dù là logic không liên quan gì tới nhau.
+- Ví dụ sai
+```go
+type Company struct {
+	Username string `json:"username"`
+	JoinedDate time.Time `json:"joined_date"`
+}
 
-use the function name getBetsList dont use getListBet..
-![Screen Shot 2023-11-30 at 15 43 29](https://github.com/arrowltd/docs/assets/17697751/4c312f5b-a7c3-472c-a4d9-460e3aff09af)
+func queryCompanyList(db *bsql.DB) []*Company {
+	list := []*Company{}
+	rows, err := db.Query(`
+			SELECT
+				username, joined_date
+			FROM
+				company
+			ORDER BY
+				joined_date DESC
+		`)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var username string
+		var joinedDate time.Time
+		err := rows.Scan(&username, &joinedDate)
+		if err != nil {
+			panic(err)
+		}
+		list = append(list, &Company{
+			Username:   username,
+			JoinedDate: joinedDate,
+		})
+	}
+	return list
+}
 
-
-
-- Lowercase the function name if the function isn't called from outside the package.
-
-Example:
-
- package greeting
- 
- func Greeting(){
- }
-
-If no external package calls the **"Greeting"** function from the greeting package, lowercase the function name to **greeting()** instead.
-
-## Pointer
-
-Will use pointer, always, will not pass by value for struct type object
-
-## Do not reuse struct that are not related just because need a field in it
-
-Example this struct here is for create
-
-![image-20211027142715059](image-20211027142715059.png)
-
-Should not do this (reuse the struct for params in list api, because need `PoolId` field)
-
-![image-20211027142741061](image-20211027142741061.png)
+func queryMemberList(db *bsql.DB) []*Company {
+	list := []*Company{}
+	rows, err := db.Query(`
+			SELECT
+				username, joined_date
+			FROM
+				member
+			ORDER BY
+				joined_date DESC
+		`)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var username string
+		var joinedDate time.Time
+		err := rows.Scan(&username, &joinedDate)
+		if err != nil {
+			panic(err)
+		}
+		list = append(list, &Company{
+			Username:   username,
+			JoinedDate: joinedDate,
+		})
+	}
+	return list
+}
+```
+  * Sai là vì function queryMemberList, mặc dù cũng trả về list object mà mỗi object có Username và JoinedDate, thì logic của `queryMemberList` là để query lấy member list, chứ ko phải là để query lấy company list, nên phải trả về một list gồm member object.
 
 ## API
 
@@ -127,16 +404,6 @@ For field, data that need duplication check, will have to check with a regex to 
 * in this example "douglas" and "douglas" are not equal (https://play.golang.org/p/djhmTffdvvr)
 
   ![image-20211104155140854](image-20211104155140854.png)
-
-# Timezone
-
-For database, use `timestamptz` data type
-
-In Code, should always use `date` package
-* will use `date.Now()` instead of `time.Now()` always
-* any code about format datetime to string, string to datetime object should use funcs inside `date` package
-* if need more func then add new func to `date` package
-
 
 
 ## HTTP Request
