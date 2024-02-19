@@ -4,7 +4,7 @@ Những gì viết ở coding convention là bắt buộc phải theo. Mỗi m�
 Khi cần làm khác đi coding convention, sẽ luôn cần hỏi người quản lý của bạn.
 # Error
 
-Không được giấu error, ko xử lý error.
+Không được giấu error. Sẽ luôn phải đọc, xử lý error.
 
 #### Ví dụ 1:
 
@@ -231,6 +231,36 @@ for rows.Next() {
 * lâu lâu thích thì 2 cột nằm 1 dòng ở Scan sai
 * dùng String Format thay vì $ để truyền params vào query
 
+### 6. Cách viết Scan()
+- Không ghi thẳng vào field của object, luôn tạo var rồi dùng nó.
+  * Ví dụ đúng
+```go
+var id, freeBetEventId, accountId, depositCount int
+var requestType, username string
+var byAccountUsername, lastDepositBankAccountName, lastWithdrawBankAccountName sql.NullString
+var lastDepositAmount, lastWithdrawAmount decimal.NullDecimal
+var date, firstDepositDate, lastDeposit time.Time
+var date, firstDepositDate, lastDepositDate time.Time
+
+err := rows.Scan(&id, &requestType,&freeBetEventId,
+	&date,
+	&accountId, &username,
+	&byAccountUsername,
+	&depositCount,
+	&firstDepositDate,&lastDepositDate,&lastDepositBankAccountName,&lastDepositAmount,
+	&lastWithdrawDate,&lastWithdrawBankAccountName,&lastWithdrawAmount)
+if err != nil {
+	panic(err)
+}
+```
+  * Ví dụ sai
+```go
+err := row.Scan(&accountObjc.Username, &accountObjc.DisplayName, &accountObjc.WhitelistIPs, &accountObjc.Permission)
+	if err != nil {
+		panic(err)
+	}
+```
+
 # Cách đặt tên
 
 - Nếu là list/slice/array thì đuôi phải có `List` hoặc `s` hoặc `es`. Ví dụ
@@ -288,15 +318,75 @@ func getMemberWithId(id int) Member {
 	// function content
 }
 
-## Do not reuse struct that are not related just because need a field in it
+# Xài lại struct
 
-Example this struct here is for create
+Không xài lại struct vì ở đó cần field của struct đó, dù là logic không liên quan gì tới nhau.
+- Ví dụ sai
+```go
+type Company struct {
+	Username string `json:"username"`
+	JoinedDate time.Time `json:"joined_date"`
+}
 
-![image-20211027142715059](image-20211027142715059.png)
+func queryCompanyList(db *bsql.DB) []*Company {
+	list := []*Company{}
+	rows, err := db.Query(`
+			SELECT
+				username, joined_date
+			FROM
+				company
+			ORDER BY
+				joined_date DESC
+		`)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var username string
+		var joinedDate time.Time
+		err := rows.Scan(&username, &joinedDate)
+		if err != nil {
+			panic(err)
+		}
+		list = append(list, &Company{
+			Username:   username,
+			JoinedDate: joinedDate,
+		})
+	}
+	return list
+}
 
-Should not do this (reuse the struct for params in list api, because need `PoolId` field)
-
-![image-20211027142741061](image-20211027142741061.png)
+func queryMemberList(db *bsql.DB) []*Company {
+	list := []*Company{}
+	rows, err := db.Query(`
+			SELECT
+				username, joined_date
+			FROM
+				member
+			ORDER BY
+				joined_date DESC
+		`)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var username string
+		var joinedDate time.Time
+		err := rows.Scan(&username, &joinedDate)
+		if err != nil {
+			panic(err)
+		}
+		list = append(list, &Company{
+			Username:   username,
+			JoinedDate: joinedDate,
+		})
+	}
+	return list
+}
+```
+  * Sai là vì function queryMemberList, mặc dù cũng trả về list object mà mỗi object có Username và JoinedDate, thì logic của `queryMemberList` là để query lấy member list, chứ ko phải là để query lấy company list, nên phải trả về một list gồm member object.
 
 ## API
 
@@ -314,16 +404,6 @@ For field, data that need duplication check, will have to check with a regex to 
 * in this example "douglas" and "douglas" are not equal (https://play.golang.org/p/djhmTffdvvr)
 
   ![image-20211104155140854](image-20211104155140854.png)
-
-# Timezone
-
-For database, use `timestamptz` data type
-
-In Code, should always use `date` package
-* will use `date.Now()` instead of `time.Now()` always
-* any code about format datetime to string, string to datetime object should use funcs inside `date` package
-* if need more func then add new func to `date` package
-
 
 
 ## HTTP Request
