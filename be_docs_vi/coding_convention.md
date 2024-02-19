@@ -112,59 +112,181 @@ When creating new database, have to have `primary key`
 * Normally it will be `id BIGSERIAL PRIMARY KEY`
 * Please dont use `SERIAL`, or forget to add `PRIMARY KEY`
 
-## Query in code
+### 5. Cách viết query trong code
 
-![image-20211021094448239](image-20211021094448239.png)
+```go
+queryString := `
+	SELECT
+		r.id, r.request_type, r.free_bet_event_id,
+		r.date as date,
+		m.account_id, m.username,
+		by_acc.username,
+		m.deposit_count,
+		m.first_deposit_date, m.last_deposit_date, m.last_deposit_bank_account_name, m.last_deposit_amount,
+		m.last_withdraw_date, m.last_withdraw_bank_account_name, m.last_withdraw_amount
+	FROM
+		dw_requests r
+	LEFT JOIN
+		account by_acc ON by_acc.id = r.by_account_id
+	LEFT JOIN
+		member m ON m.account_id = r.member_account_id
+	WHERE
+		r.date >= $1
+		AND r.date <= $2
+	ORDER BY
+		r.date DESC
+	LIMIT
+		3000
+`
+rows, err := db.Query(queryString, startDate, endDate)
+if err != nil {
+	panic(err)
+}
+defer rows.Close()
+for rows.Next() {
+	var id, freeBetEventId, accountId, depositCount int
+	var requestType, username string
+	var byAccountUsername, lastDepositBankAccountName, lastWithdrawBankAccountName sql.NullString
+	var lastDepositAmount, lastWithdrawAmount decimal.NullDecimal
+	var date, firstDepositDate, lastDeposit time.Time
+	var date, firstDepositDate, lastDepositDate time.Time
 
-Should tab, go new line just like this
+	err := rows.Scan(&id, &requestType,&freeBetEventId,
+		&date,
+		&accountId, &username,
+		&byAccountUsername,
+		&depositCount,
+		&firstDepositDate,&lastDepositDate,&lastDepositBankAccountName,&lastDepositAmount,
+		&lastWithdrawDate,&lastWithdrawBankAccountName,&lastWithdrawAmount)
+	if err != nil {
+		panic(err)
+	}
+}
+```
+* SQL Keywords sẽ được viết hoa
+* Xuống hàng ở mỗi SELECT, FROM, WHERE, LEFT JOIN, ORDER BY, LIMIT etc
+* ngắt hàng nếu quá nhiều cột
+* cột ở cùng 1 dòng sẽ thuộc về 1 cụm logic chung (chứ ko phải mỗi cột nằm 1 dòng)
+* vị trí ngắt cột ở mỗi dòng ở SELECT cũng sẽ là vị trí ngắt cột ở mỗi dòng khi Scan()
+* dùng $1 $2 khi thêm params (không được dùng String Format, nếu cần phải dùng, hỏi lead)
 
-`LEFT JOIN` clause can stay in 1 line for easier copy paste, but for readability should go new line
+Một ví dụ về query viết sai:
+```golang
+queryString := fmt.Sprintf(`
+	SELECT
+		r.id, r.request_type, r.free_bet_event_id,
+		r.date as date,
+		m.account_id, m.username,
+		by_acc.username,
+		m.deposit_count,
+		m.first_deposit_date, m.last_deposit_date, m.last_deposit_bank_account_name, m.last_deposit_amount,
+		m.last_withdraw_date, m.last_withdraw_bank_account_name, m.last_withdraw_amount
+	FROM
+		dw_requests r
+	LEFT JOIN
+		account by_acc ON by_acc.id = r.by_account_id
+	LEFT JOIN
+		member m ON m.account_id = r.member_account_id
+	WHERE
+		r.date >= %s
+		AND r.date <= %s
+	ORDER BY
+		r.date DESC
+	LIMIT
+		3000
+`, startDateStr, endDateStr)
+rows, err := db.Query(queryString)
+if err != nil {
+	panic(err)
+}
+defer rows.Close()
+for rows.Next() {
+	var id, freeBetEventId, accountId, depositCount int
+	var requestType, username string
+	var byAccountUsername, lastDepositBankAccountName, lastWithdrawBankAccountName sql.NullString
+	var lastDepositAmount, lastWithdrawAmount decimal.NullDecimal
+	var date, firstDepositDate, lastDeposit time.Time
+	var date, firstDepositDate, lastDepositDate time.Time
 
-Keywords (`SELECT`, `FROM`, `AS` etc) will be uppercased
+	err := rows.Scan(&id, 
+		&requestType,
+		&freeBetEventId,
+		&date,
+		&accountId, 
+		&username,
+		&byAccountUsername,
+		&depositCount,
+		&firstDepositDate,&lastDepositDate,
+		&lastDepositBankAccountName,
+		&lastDepositAmount,
+		&lastWithdrawDate,
+		&lastWithdrawBankAccountName,
+		&lastWithdrawAmount)
+	if err != nil {
+		panic(err)
+	}
+}
+```
+* ngắt cột ở SELECT sai
+* lâu lâu thích thì 2 cột nằm 1 dòng ở Scan sai
+* dùng String Format thay vì $ để truyền params vào query
 
-Using variable params ($1, $2) instead of use "String Format" at picture below.	
+# Cách đặt tên
 
-Valid Query:
+- Nếu là list/slice/array thì đuôi phải có `List` hoặc `s` hoặc `es`. Ví dụ
+  * nameList := []string{}
+  * members := []*Member{}
+  * listName => sai
+  * sliceName => sai
+- Nếu là map thì đuôi phải có `Map`, đầu phải có tên key và tên value
+  * companyAccountIdBalanceMap := map[int]decimal.Decimal{}
+  * memberUsernameMemberMap := map[string]*Member{}
+  * mapCompanyCache => sai
+- tên function sẽ bắt đầu bằng động từ
+  * getBetList()
+  * getBets()
+  * queryMemberInfo()
+  * getUsername()
+  * Username() => sai
+- Nếu function không cần public, thì viết chữ cái đầu là viết thường
+  * Nên là lúc mới viết thì cứ viết thường hết, khi nào cần public cái function thì viết hoa lên
 
-![Screen Shot 2023-11-20 at 15 51 14](https://github.com/arrowltd/docs/assets/17697751/92f0734d-a539-47df-b713-6f7b1739313a)
+# Pointer/Value
 
-Invalid Query:
+**- Đây là cái Tech Lead kị nhất. Đừng bao giờ sai.**
+- Nếu đang là object (sinh ra từ struct), thì luôn luôn xài pointer, ko bao giờ pass by value 
+- Ví dụ đúng
+```go
+member := &Member{
+	Username : "steve",
+	Age: 2,
+}
+```
 
-![Screen Shot 2023-11-20 at 15 52 54](https://github.com/arrowltd/docs/assets/17697751/c8676176-6575-4dd3-beea-57ff46441a12)
+```go
+memberList := []*Member{}
+```
 
-In some cases if you need to use query "String Format' let discuss with the Teach Lead about that case firstly
+```go
+func getMemberWithId(id int) *Member {
+	// function content
+}
+- Ví dụ sai
+```go
+member := Member{
+	Username : "steve",
+	Age: 2,
+}
+```
 
-Long list of variables will go to new line, group each line base on application logic, and when get the value out also stay in same line. Example for the above query
+```go
+memberList := []Member{}
+```
 
-![image-20211021094459924](image-20211021094459924.png)
-
-## Naming
-
-- If variable or function return a list, slice, it will end with `List` or `s` or `es`
-
-Example:
-
-![image-20211026092918067](image-20211026092918067.png)
-
-use the function name getBetsList dont use getListBet..
-![Screen Shot 2023-11-30 at 15 43 29](https://github.com/arrowltd/docs/assets/17697751/4c312f5b-a7c3-472c-a4d9-460e3aff09af)
-
-
-
-- Lowercase the function name if the function isn't called from outside the package.
-
-Example:
-
- package greeting
- 
- func Greeting(){
- }
-
-If no external package calls the **"Greeting"** function from the greeting package, lowercase the function name to **greeting()** instead.
-
-## Pointer
-
-Will use pointer, always, will not pass by value for struct type object
+```go
+func getMemberWithId(id int) Member {
+	// function content
+}
 
 ## Do not reuse struct that are not related just because need a field in it
 
