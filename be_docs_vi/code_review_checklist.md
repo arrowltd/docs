@@ -1,0 +1,4 @@
+- **Đã đọc lại code mình viết chưa**
+- function bị xoá, logic bị xoá, có thật sự được xoá hay vô tình xoá, đã tìm hiểu kĩ chưa
+- comment out là để note cho người sau đọc hiểu về code hiện tại, hay là comment out code cần phải xoá, để cho chạy
+- log có cần giữ ko, hay chỉ cần lúc làm
