@@ -34,7 +34,7 @@
 # Công ty và sản phẩm
 
 Những đặc thù và hệ luỵ của sản phẩm mà chúng ta làm là
-- 1. Transaction là tiền thật, sai sót, bug, crash là mất tiền. Như sản phẩm ngân hàng. Hệ luỵ:
+- 1. Transaction là tiền thật, sai sót, bug, crash là mất tiền. Như sản phẩm ngân hàng. Lượng khách hàng và dòng tiền hiện tại cực kì lớn. Hệ luỵ:
   * **Khi có bug/problem/incidents, cần sửa code/fix bug/thêm code an toàn nhất và nhanh nhất có thể.**
 - 2. Khó tìm/tuyển người. Những người có thâm niên và giỏi thì có nhiều lựa chọn, vậy họ sẽ không chọn công ty, sản phẩm của mình. Những người còn mới, muốn học hỏi, khi học hỏi đầy đủ rồi sẽ có nhiều lựa chọn, vậy họ sẽ chọn không ở lại công ty mình. Hệ luỵ:
   * Team mình bao gồm người mới, beginner level nhiều.
@@ -110,11 +110,11 @@ Từ những hệ luỵ trên chúng ta suy ra được cái quan trọng nhất
   * Viết test, thay vì test manually bằng postman
   * Viết code càng đơn giản càng tốt, chú ý là việc code đơn giản quan trọng hơn performance (mục Tổng Quan)
   * Không giấu code lạ khó với người review, không để làm gì. Bạn làm vậy thì code bạn chạy được (tầm quan trọng số ba), nhưng nó không tốt (tầm quan trọng số 1)
-  * Chỗ nào cần test/check kĩ, cần giao tiếp với QC thật rõ ràng, ko giấu. Cái quan trọng không phải là bạn làm được bao nhiêu
+  * Chỗ nào cần test/check kĩ, cần giao tiếp với QC thật rõ ràng, ko giấu. Cái quan trọng không phải là cái bạn làm có pass QC test hay không, mà là cái bạn làm không có bug
 - Code bạn viết xong, nhưng bị QC báo bug nhiều, vậy thì nên nhìn lại xem mình có thật sự viết code theo đúng "Defensive Coding" chưa.
   * Việc bạn tự hạn chế bug trước khi đưa QC test, nó giúp cho bạn đỡ phải giao tiếp nhiều với người khác, và giúp bạn code được nhiều hơn, là cái trên lý thuyết là developers luôn muốn.
 - Code bạn viết xong, rồi bị bug ở Production
-  * Nó có phần là lỗi của bạn, nhưng cũng có phần lỗi của Lead, Tech Lead, QC. Ở team BE, chúng ta không trách móc người viết code khi bị code ở Production.
+  * Nó có phần là lỗi của bạn, nhưng cũng có phần lỗi của Lead, Tech Lead, QC. Ở team BE, chúng ta không trách móc người viết code khi code bị bug ở Production.
   * Dù vậy chúng ta xem lại tại sao lại bị vậy, lủng ở chỗ nào, tiến tới đảm bảo nó không xảy ra lại (ko phải xảy ra cái bug đó lại, mà không xảy ra việc để lọt bug).
 - Bug ở production sẽ là lỗi của bạn khi:
   * Bạn không làm theo checklist, coding convention, guideline, dẫn tới bug đó.
@@ -167,9 +167,13 @@ Từ những hệ luỵ trên chúng ta suy ra được cái quan trọng nhất
   * Code chạy, nhưng cũng lệch với số 1, thì viết lại
   * Dễ test, performance tốt, nhưng lệch với số 1, thì viết lại
 - Bạn sử dụng cách suy nghĩ này cho những mục sau (performance tốt nhưng sẽ dễ bug, ko kiểm soát được, nghĩa là viết lại etc)
-- Từ đây bạn nhận ra là ở team BE chúng ta ko quan trọng code chạy được nhiều không, giải quyết được nhiều feature không, mà quan trọng code có tốt không.
+- Từ đây bạn nhận ra là ở team BE chúng ta ko quan trọng code chạy được không, giải quyết được nhiều feature không, mà quan trọng code có tốt không.
   * Toàn bộ lý do là để khi có vấn đề ở Production, thì người hotfix đọc hiểu nhanh, fix nhanh gọn, giảm thiểu tối đa rủi ro
   * Nó khác hoàn toàn với những công ty đang xây dựng từ đầu, yêu cầu chạy đua feature, code càng nhanh nhiều càng tốt, chỉ cần chạy được để đưa tới khách hàng, người dùng sớm, rồi sẽ chỉnh sửa sau.
+- Làm đúng chức năng nó cần làm không quan trọng bằng code dễ đọc ít bug (số 1 và 2), việc này dẫn tới:
+  * Chúng ta có quyền từ chối nếu để làm được chức năng này cần phải viết code quá phức tạp, quá nhiều, không đảm bảo được ít bug ở chức năng này hay những chức năng liên qua.
+  * Việc từ chối này sẽ phải giao tiếp với Lead, Lead sẽ suy nghĩ hướng dẫn cách code tốt hơn để không bị quá phức tạp, hoặc Lead công nhận cái phức tạp này không thể giải quyết bằng code, lúc đó Lead sẽ giao tiếp với Tech Lead
+  * Tech Lead là người duy nhất có quyền xin không làm một chức năng với các team khác khi chức năng đó làm code phức tạp, không quản lý được bug (lệch với số 1 và 2)
 - Mục cuối cùng là làm xong nhanh, cũng có nghĩa là thật sự ko cần làm xong nhanh. Tốc độ sẽ tới khi bạn làm nhiều, quen tay. Khi bạn bị kẹt ở một vấn đề, nên hỏi Lead, chứ ko nên dậm chân tại chỗ quá lâu.
 - Ở team BE, chúng ta quản lý thời gian bằng cách
   * khi Lead giao việc, Lead tự cảm nhận được công việc này tốn bao lâu, tự biết được công việc này gấp hay không gấp
@@ -192,7 +196,3 @@ Từ những hệ luỵ trên chúng ta suy ra được cái quan trọng nhất
   * Ngoài giờ làm việc, trừ trường hợp khẩn cấp, bạn không nên hỏi, nhắn về công việc với người khác trong công ty. Bạn luôn có thể note lại vào todo list của bạn để khi vào giờ làm việc thì hỏi/nói
 - Giao tiếp là một cái cực kì quan trọng để bổ trợ cho công việc. Nếu không giao tiếp thì không thể đảm bảo các mục từ 1 tới 6 tốt được.
 
-# TodoList và Checklist
-
-
-# 

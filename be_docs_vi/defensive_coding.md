@@ -7,3 +7,5 @@
 # Viết thêm cho không bug
 
 # Giải quyết những chỗ phức tạp
+
+# Phân biệt "Hack" và "Code"

@@ -391,93 +391,68 @@ func queryMemberList(db *bsql.DB) []*Company {
 ```
   * Sai là vì function queryMemberList, mặc dù cũng trả về list object mà mỗi object có Username và JoinedDate, thì logic của `queryMemberList` là để query lấy member list, chứ ko phải là để query lấy company list, nên phải trả về một list gồm member object.
 
-## API
+## Độ dài của một dòng code
 
-For API that need validation (username cannot be blank, no special character, or logic validation), API will always have to validate, not just FE
-	* Because if only FE validate, anyone can just call the API themself and bypass FE validation
-
-## Duplication check
-
-For field, data that need duplication check, will have to check with a regex to prevent special character also
-
-* Normally this will be `username`, `code` bla bla, these always have `a-z0-9` or the like, this will prevent special character
-
-* without special character prevention, data can have extra invisible character that cause 2 same strings to be not equal but display the same
-
-* in this example "douglas" and "douglas" are not equal (https://play.golang.org/p/djhmTffdvvr)
-
-  ![image-20211104155140854](image-20211104155140854.png)
-
-
-## HTTP Request
-
-Remember to add `defer resp.Body.Close()` after send request
-
-![image-20211109104207041](image-20211109104207041.png)
+Độ dài tối đa của một dòng code nên dao động trong khoảng 150 ký tự.
 
 ## Git
 
-Commit message will have to be meaningful
+- Commit message sẽ có thêm tên branch.
+  * <tên branch> <commit message>
+- Phần không phải tên branch của commit message nên có ý nghĩ
+  * Không nên "refactor", "fix bug", "fix bug 2"
+  * Có thể commit với message như vậy, nhưng khi đưa Lead review, thì squash mớ đó lại thành 1 commit, và sửa commit message
 
-Please dont:
+## Int/Number cho type
 
-![telegram-cloud-photo-size-5-6075848371614101317-y](telegram-cloud-photo-size-5-6075848371614101317-y.png)
+- Ví dụ
 
-another to do this is squash all commit into 1, then amend the commit message to be meaningful
+```go
+// Validate existing bet
+if reqParams.Type == 20 || reqParams.Type == 21｛
+	 // handle
+} else if reqParams.Type == 22 {
+   // handle	
+}
+```
 
-https://www.internalpointers.com/post/squash-commits-into-one-git
+- Ở ví dụ trên sẽ rất khó nhớ/biết được là 20 21 là gì, 22 là gì.
+- Những trường hợp như vầy chúng ta sẽ tạo const
 
+```go
+const ReqParamsTypeBet int = 20
+const ReqParamsTypeWin int = 21
+const ReqParamsTypeRefund int = 22
 
-
-## Int/Number for type
-
-Type should be `string`, a self explain text for that type, eg:
-
-* `promo_win`
-* `withdraw`
-
-If integrate 3rd party, and they are using integer/number for type, have to create const for those
-
-Example this is very hard to read, no idea what 20 21 or 111 mean
-
-![image-20211111102804707](image-20211111102804707.png)
-
-Updated:
-
-![image-20211111102832004](image-20211111102832004.png)
-
-![image-20211111102933883](image-20211111102933883.png)
-
+// Validate existing bet
+if reqParams.Type == ReqParamsTypeBet || reqParams.Type == ReqParamsTypeWin｛
+	 // handle
+} else if reqParams.Type == ReqParamsTypeRefund {
+   // handle	
+}
+```
 
 ## Error
 
-return when user needs to see the error (input error, validation error)
-
-should not return error when user does not need to see the error (it will be returned to user as `err:internal_server_error`), so most of api call to 3rd party, database query error etc
-
-panic only if need Tech Lead to check (in production, every panic will notify Tech Lead). So another way to think if should panic or not is to ask yourself is this error need check by Tech Lead in production server?
-
-Some panic cases:
-* API call to 3rd party
-* Most errors from db
-
-If user does not need to see, but also no need to ask Tech Lead to check, then log it to file (using LogSerious)
+- Return error khi player/member/user cần phải thấy error đó là gì (nhập sai username, chưa nhập đủ ký tự)
+- Panic(error) khi player/member/user không cần phải thấy error đó là gì (Database error, gọi api tới bên thứ ba lỗi)
+  * khi panic, chỗ handle nó sẽ tự động gửi cho player/member/user lỗi `err:internal_server_error`
 
 
-## HTTP Response when success
+## HTTP Response khi gọi API thành công
 
-Should not response empty or JSON `{}` when success. Can be `{"success": true}` or the like
-* This is because sometime when server failure or http problem, empty response can also be sent
+- Không nên trả về rỗng, JSON rỗng ("" hoặc "{}") khi thành công.
+  * Chỉ cần trả về `{"success": true}` là được
+	* Đây là vì một số server setup khi lỗi họ cũng trả về rỗng. Làm FE, hay bên nào gọi API request ko biết được đang gọi thành công hay server đang lỗi
 
 # Float64
 
-Should just never use float64. It is not an exact value
+**- Đây là cái Tech Lead kị thứ 3. Đừng bao giờ sai.**
 
-The way our golang project structure, some value, field, object will get cached and use a lot, if a field is in float64, the more that field is used to compute, the easier it will get incorrect value (3 = 2.9999999)
+**Không bao giờ được dùng float, float64, double. Số được chứa bởi những datatype đó không phải là giá trị chính xác.**
 
-Another problem with float64 is when unmarshal json data in golang. If the json field is number json type, should use decimal.Decimal, or a custom wrapper for decimal.Decimal to read/write json. This is because there are case when reading a number json type into float64 cause it to just off by a bit (3 = 2.999999)
-
-If a JSON response required a number field with decimal value (example {"value": 3.14}, instead of normally {"value": "3.14"}). We will use DecimalNumberJSON struct to do it, instead of decimalValue.Float64()
+- Khi `Unmarshal` JSON data, nếu cần đọc Number JSON Type, chúng ta dùng decimal.Decimal
+  * Khi gọi API cần JSON có số thập phân (ví dụ cần gửi lên {"value": 3.14}, thay vì {"value": "3.14"}), sẽ dùng DecimalNumberJSON struct để làm việc đó, thay vì decimalValue.Float64()
 ```
 type DecimalNumberJSON struct {
 	DecimalNumber decimal.Decimal
@@ -498,47 +473,11 @@ func (di DecimalNumberJSON) MarshalJSON() ([]byte, error) {
 }
 ```
 
-TODO: pending example needed
-
 # JSON marshal/unmarshal
 
-Will always use struct, or try as much as you can to use struct, instead of Dict or map[string]interface{}. This will prevent various problem with strange json format like number become scientific number, cannot read numeric field from map[string]interface{}
+**- Đây là cái Tech Lead kị thứ 2. Đừng bao giờ sai.**
 
-# Define a function.
-Any functions defined would be better if they are attached to structs, except the functions defined in help packages (shared/utils).
-
-Format for the function:
-
-type struct_name struct { }
-
-func (m *struct_name) function_name() int {
-
- //code
-    
-}
-
-Example:
-
-We have a ticket to identify the payment gateways, they have the same features and only the **payment code** is different.
-
-To do this:
-
-- We define an Utilities struct
-
-![Screen Shot 2023-11-20 at 17 12 48](https://github.com/arrowltd/docs/assets/17697751/66d68f15-cd81-4300-a0fc-7c03bd429867)
-
-- Init 2 Utilities (2 payment gateways) struct with the payment code is different: 
- 
-  ![Screen Shot 2023-11-20 at 17 28 50](https://github.com/arrowltd/docs/assets/17697751/cbf5822e-319c-4758-9ca5-0dbeed247e0f)
-
-- After that we define function callAPIWithUserAgent and attached to Utilities struct
-
-![Screen Shot 2023-11-20 at 17 15 13](https://github.com/arrowltd/docs/assets/17697751/8efd318e-d46f-4f20-b4df-2bfe007c2e74)
-
-- For each payment gateway we only need to define a unique payment code and based on that code we can perform the corresponding logic
-
-
-
+Luôn dùng struct, thay vì `map[string]interface{}` hay `map[string]any`.
 
 
  
