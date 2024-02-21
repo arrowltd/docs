@@ -1,6 +1,7 @@
 # Checklist chính
 
 - **Đọc lại code mình viết**
+  * Sourcetree hay những app tương tự sẽ xem được commit này đụng tới những files nào, đã thêm xoá sửa code gì rất rõ ràng
 - Code đã theo coding convention
 - Code đã theo defensive coding
 - function bị xoá, logic bị xoá, có thật sự được xoá hay vô tình xoá, đã tìm hiểu kĩ chưa

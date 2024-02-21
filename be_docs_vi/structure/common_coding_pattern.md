@@ -1,0 +1,3 @@
+
+
+# Cách viết database migration cho data khi cần tác động tới quá nhiều dòng (trên 500k dòng)

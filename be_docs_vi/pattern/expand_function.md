@@ -1,0 +1,1 @@
+# Cách sửa function khi cần thêm input/output

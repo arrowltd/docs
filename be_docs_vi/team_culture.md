@@ -20,7 +20,7 @@
 
 - Tech Lead là người cao nhất, có quyết định sau cùng
   * Được quyền đóng góp ý kiến, bảo là cái này sai nè cái này đúng nè cái này nên làm vầy nè
-  * Nhưng nếu bạn và Tech Lead đã thống nhất là vấn đề hiện tại không có sai lệch về giao tiếp, Tech Lead đúng là muốn A, bạn muốn B, Tech Lead bảo không, làm A, không làm B, vậy thì bạn làm A.
+  * Nhưng nếu bạn và Tech Lead đã thống nhất là vấn đề hiện tại không có sai lệch về giao tiếp, Tech Lead đúng là muốn A, bạn muốn B, Tech Lead bảo không, phải làm A, không làm B, vậy thì bạn làm A.
   * Việc này đồng nghĩa với việc Tech Lead là người chịu trách nhiệm cuối cùng. Chứ không phải bạn
 
 - Team BE có chia nhỏ theo "bộ"
@@ -64,6 +64,7 @@ Từ những hệ luỵ trên chúng ta suy ra được cái quan trọng nhất
 
 # Review code
 
+- Có checklist cho việc review code. Dùng nó cho cả lúc review và lúc trước khi đưa code của bạn cho người khác review.
 - Không đợi tới lúc review code, bị hỏi tại sao làm vậy mới bắt đầu hỏi ngược lại làm vậy được không.
 - Người review code (Lead, Tech Lead) không phải thánh thần, cũng không phải người không bao giờ sai, cũng không phải Developers 5 sao vô địch hoàn hảo. Vì vậy nên:
   * Cái gì nó lạ, thì note lại cho người review code biết, để xem chỗ đó kĩ hơn, đảm bảo không bị thiếu sót.
@@ -76,6 +77,7 @@ Từ những hệ luỵ trên chúng ta suy ra được cái quan trọng nhất
 # Giao tiếp
 
 - Cách giao tiếp này áp dụng cho việc giao tiếp trong team BE, và giao tiếp ngoài team BE.
+- Có checklist cho việc giao tiếp.
 - Chú trọng giao tiếp, ko biết ko hiểu ko chắc thì giao tiếp rồi code, ko phải là code rồi mới giao tiếp.
   * Các bạn có thể thấy phiền vì phải nói/chat quá nhiều. Ráng chịu thôi. Khi quen rồi thích cách giao tiếp cách nói chuyện sẽ tốt hơn, tỉ lệ người nghe đọc hiểu sẽ tăng lên, tốt cho công việc và cho cuộc sống
 - Ở công ty mình, việc giao tiếp (với Lead, với QC) chiếm thời gian nhiều nhất của bạn, chứ ko phải code.
@@ -195,4 +197,4 @@ Từ những hệ luỵ trên chúng ta suy ra được cái quan trọng nhất
   * Giờ làm việc là giờ làm của cả công ty, không riêng gì team BE. Bạn phải có mặt sẵn sàng hỗ trợ team BE hay team khác những vấn đề về công việc. Không được lấy lý do quen làm buổi tối, và ko chịu hỗ trợ buổi sáng
   * Ngoài giờ làm việc, trừ trường hợp khẩn cấp, bạn không nên hỏi, nhắn về công việc với người khác trong công ty. Bạn luôn có thể note lại vào todo list của bạn để khi vào giờ làm việc thì hỏi/nói
 - Giao tiếp là một cái cực kì quan trọng để bổ trợ cho công việc. Nếu không giao tiếp thì không thể đảm bảo các mục từ 1 tới 6 tốt được.
-
+- Tất cả mọi người trong team BE phải giữ cho mình một cái Todo list và một bộ note.
